@@ -1,4 +1,4 @@
-name: Send Commit Message to Webhook 
+name: Send Commit Message to Webhook
 
 on:
   push:
