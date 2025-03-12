@@ -1,0 +1,30 @@
+name: Send Commit Message to Webhook 
+
+on:
+  push:
+    branches:
+      - main 
+      - development
+
+jobs:
+  notify-webhook:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get the commit message
+        id: commit-message
+        run: |
+          # Get the commit message of the current push
+          commit_message=$(git log -1 --pretty=%B)
+          echo "Commit message: $commit_message"
+          echo "::set-output name=message::$commit_message"
+
+      - name: Send commit message to webhook
+        run: |
+          # Send the commit message to the webhook
+          curl -X POST 'https://hook.app.workfrontfusion.com/5kr0cnn1g1ry3aemmz64b6h95nz4pamd?requestId=${{ steps.commit-message.outputs.message }}' \
+            -H "Content-Type: application/json" \
+            -d '{"commit_message": "${{ steps.commit-message.outputs.message }}"}'
