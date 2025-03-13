@@ -3,6 +3,7 @@ name: Notify Changed Files on Merge
 on:
   push:
     branches:
+      - main
       - development
 
 jobs:
