@@ -1,30 +1,34 @@
-name: Send Commit Message to Webhook
+name: Notify Changed Files on Merge
 
 on:
   push:
     branches:
-      - main 
       - development
 
 jobs:
-  notify-webhook:
+  notify_files:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout Code
+      uses: actions/checkout@v2
 
-      - name: Get the commit message
-        id: commit-message
-        run: |
-          # Get the commit message of the current push
-          commit_message=$(git log -1 --pretty=%B)
-          echo "Commit message: $commit_message"
-          echo "::set-output name=message::$commit_message"
+    - name: Get List of Changed Files
+      id: changed_files
+      run: |
+        # Get a list of files changed between the current and previous commit
+        FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+        echo "Changed files: $FILES"
+        
+        # Save the files to be used in later steps
+        echo "FILES=$FILES" >> $GITHUB_ENV
 
-      - name: Send commit message to webhook
-        run: |
-          # Send the commit message to the webhook
-          curl -X POST 'https://hook.app.workfrontfusion.com/5kr0cnn1g1ry3aemmz64b6h95nz4pamd?requestId=${{ steps.commit-message.outputs.message }}' \
-            -H "Content-Type: application/json" \
-            -d '{"commit_message": "${{ steps.commit-message.outputs.message }}"}'
+    - name: Send Files to Webhook
+      run: |
+        # Prepare the file names as a JSON array
+        JSON_PAYLOAD=$(echo $FILES | sed 's/ /","/g' | sed 's/^/["/' | sed 's/$/"]/')
+        
+        # Send the list of changed files to the webhook URL
+        curl -X POST -H "Content-Type: application/json" \
+          -d "{\"files\": $JSON_PAYLOAD}" \
+          "https://hook.app.workfrontfusion.com/5kr0cnn1g1ry3aemmz64b6h95nz4pamd"
