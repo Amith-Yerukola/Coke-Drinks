@@ -1,4 +1,4 @@
-name: Notify Changed Files on Merge
+name: Notify Changed Files on Merge 
 
 on:
   push:
